@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A beautiful Focus Toolkit to help you increase concentration and mindfulness.">
+    <title>Focus Toolkit</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap');
+
+        :root {
+            --text-color: #3d342b;
+            --accent-color: #d4a373;
+            --accent-hover: #b08960;
+            --glass-bg: rgba(255, 255, 255, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.6);
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: 'Outfit', sans-serif;
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden;
+            transition: background 1.5s ease-in-out;
+            background: radial-gradient(circle at center, #fdfbf7 0%, #f4e8d8 100%); /* Default Trataka */
+        }
+
+        /* Themes */
+        body.theme-trataka { background: radial-gradient(circle at center, #fdfbf7 0%, #f4e8d8 100%); --accent-color: #d4a373; --accent-hover: #b08960; }
+        body.theme-breathing { background: radial-gradient(circle at center, #f0f8ff 0%, #dbe9f4 100%); --accent-color: #7b9ebc; --accent-hover: #5d7e9b; }
+        body.theme-pomodoro { background: radial-gradient(circle at center, #fff0ed 0%, #ffdcd5 100%); --accent-color: #e57373; --accent-hover: #c65353; }
+        body.theme-grounding { background: radial-gradient(circle at center, #f4fcf6 0%, #e2f2e5 100%); --accent-color: #81c784; --accent-hover: #60a563; }
+        body.theme-starter { background: radial-gradient(circle at center, #faf0ff 0%, #eeddf5 100%); --accent-color: #ba68c8; --accent-hover: #9c4ba8; }
+
+        /* Navigation */
+        .nav-bar {
+            display: flex;
+            gap: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            z-index: 100;
+            transition: opacity 1s ease, transform 1s ease;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.3);
+            border: 1px solid var(--glass-border);
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 600;
+            color: var(--text-color);
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .nav-btn.active {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        /* Focus Mode Hide elements */
+        body.focus-mode .nav-bar {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-20px);
+        }
+        body.focus-mode .glass-panel {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.95);
+        }
+
+        /* Main App Area */
+        .app-container {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            position: relative;
+        }
+
+        .tool-view {
+            position: absolute;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        .tool-view.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        /* Shared Glass Panel */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 40px;
+            width: 90%;
+            max-width: 480px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+            transition: opacity 1s ease, transform 1s ease;
+            position: relative;
+            z-index: 20;
+        }
+
+        h1 {
+            font-weight: 600;
+            font-size: 2rem;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        p {
+            font-weight: 300;
+            line-height: 1.5;
+            margin-bottom: 25px;
+            font-size: 1.05rem;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        input[type="number"], input[type="text"] {
+            padding: 10px;
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.7);
+            font-family: inherit;
+            font-size: 1.1rem;
+            color: var(--text-color);
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input[type="number"] { width: 60px; text-align: center; }
+        input[type="text"] { width: 100%; box-sizing: border-box; }
+        input:focus { border-color: var(--accent-color); }
+
+        .checkbox-control {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+
+        .checkbox-control input {
+            margin-right: 8px;
+            width: 16px;
+            height: 16px;
+            accent-color: var(--accent-color);
+            cursor: pointer;
+        }
+
+        button.primary-btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 30px;
+            font-family: inherit;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        button.primary-btn:hover {
+            background-color: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 25px rgba(0,0,0,0.15);
+        }
+
+        button.primary-btn:active { transform: translateY(1px); }
+
+        button.secondary-btn {
+            background-color: transparent;
+            color: var(--text-color);
+            border: 1px solid var(--accent-color);
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        button.secondary-btn:hover { background: rgba(255,255,255,0.5); }
+
+        /* Display texts */
+        .large-timer {
+            font-size: 4rem;
+            font-weight: 300;
+            margin: 20px 0;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .escape-hint {
+            position: absolute;
+            top: -30px;
+            width: 100%;
+            text-align: center;
+            font-size: 0.9rem;
+            color: rgba(0,0,0,0.4);
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+        body.focus-mode .escape-hint { opacity: 1; }
+
+        /* Specific Tools Elements */
+        
+        /* 1. Trataka */
+        .trataka-dot {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 16px;
+            height: 16px;
+            background-color: #0f0f0f;
+            border-radius: 50%;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 1s ease;
+            z-index: 10;
+        }
+        body.focus-mode .trataka-dot.active {
+            opacity: 1;
+            animation: subtle-pulse 4s infinite;
+        }
+        @keyframes subtle-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(15, 15, 15, 0.1); }
+            70% { box-shadow: 0 0 0 10px rgba(15, 15, 15, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(15, 15, 15, 0); }
+        }
+
+        /* 2. Box Breathing */
+        .breathing-circle-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 1s ease;
+            z-index: 10;
+        }
+        body.focus-mode .breathing-circle-container.active { opacity: 1; }
+        
+        .breathing-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.4);
+            border: 2px solid var(--accent-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 4s linear;
+        }
+        .breathing-text {
+            font-size: 1.5rem;
+            font-weight: 300;
+            color: var(--text-color);
+            transition: opacity 0.5s ease;
+        }
+
+        /* 4. Grounding List */
+        .grounding-list {
+            text-align: left;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+        .grounding-list li {
+            margin-bottom: 15px;
+            background: rgba(255,255,255,0.4);
+            padding: 12px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            transition: background 0.3s;
+        }
+        .grounding-list li.completed {
+            background: rgba(255,255,255,0.8);
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+        .grounding-list input[type="checkbox"] {
+            margin-right: 15px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: var(--accent-color);
+        }
+
+    </style>
+</head>
+<body class="theme-trataka">
+
+    <!-- Navigation -->
+    <nav class="nav-bar">
+        <button class="nav-btn active" data-target="tool-trataka" data-theme="theme-trataka">Dot Focus</button>
+        <button class="nav-btn" data-target="tool-breathing" data-theme="theme-breathing">Breathing</button>
+        <button class="nav-btn" data-target="tool-pomodoro" data-theme="theme-pomodoro">Pomodoro</button>
+        <button class="nav-btn" data-target="tool-grounding" data-theme="theme-grounding">Grounding</button>
+        <button class="nav-btn" data-target="tool-starter" data-theme="theme-starter">2-Min Starter</button>
+    </nav>
+
+    <!-- Background Elements for Focus Modes -->
+    <div class="trataka-dot" id="the-dot"></div>
+    <div class="breathing-circle-container" id="breathing-anim">
+        <div class="breathing-circle" id="breath-circle">
+            <span class="breathing-text" id="breath-text">Prepare</span>
+        </div>
+        <div class="escape-hint">Press ESC to exit early</div>
+    </div>
+
+    <!-- Main Container -->
+    <main class="app-container">
+        
+        <!-- 1. Trataka Tool -->
+        <section id="tool-trataka" class="tool-view active">
+            <div class="glass-panel">
+                <h1>Dot Staring</h1>
+                <p>Train your visual concentration and mental focus. Fix your gaze on the dot, steady your breathing, and resist distractions.<br><br><b>Press ESC to exit early.</b></p>
+                
+                <div class="controls">
+                    <label for="tra-min">Min:</label>
+                    <input type="number" id="tra-min" value="3" min="0" max="60">
+                    <label for="tra-sec">Sec:</label>
+                    <input type="number" id="tra-sec" value="0" min="0" max="59">
+                </div>
+
+                <label class="checkbox-control">
+                    <input type="checkbox" id="tra-fullscreen" checked>
+                    Go Fullscreen & Keep Awake
+                </label>
+
+                <button class="primary-btn" id="tra-start">Start Session</button>
+            </div>
+        </section>
+
+        <!-- 2. Box Breathing Tool -->
+        <section id="tool-breathing" class="tool-view">
+            <div class="glass-panel">
+                <h1>Box Breathing</h1>
+                <p>Calm your nervous system using the 4-4-4-4 rhythm. Follow the visual guide: Inhale (4s), Hold (4s), Exhale (4s), Hold (4s).<br><br><b>Press ESC to exit early.</b></p>
+                
+                <div class="controls">
+                    <label for="breath-min">Duration (Min):</label>
+                    <input type="number" id="breath-min" value="2" min="1" max="10">
+                </div>
+
+                <label class="checkbox-control">
+                    <input type="checkbox" id="breath-fullscreen" checked>
+                    Go Fullscreen & Keep Awake
+                </label>
+
+                <button class="primary-btn" id="breath-start">Start Breathing</button>
+            </div>
+        </section>
+
+        <!-- 3. Pomodoro Tool -->
+        <section id="tool-pomodoro" class="tool-view">
+            <div class="glass-panel">
+                <h1>Pomodoro Timer</h1>
+                <p>Structure your work into deep focus sessions separated by short breaks.</p>
+                
+                <div class="controls" style="margin-bottom: 10px;">
+                    <button class="secondary-btn" id="pomo-mode-work">Work (25m)</button>
+                    <button class="secondary-btn" id="pomo-mode-break">Break (5m)</button>
+                </div>
+
+                <div class="large-timer" id="pomo-display">25:00</div>
+                
+                <div class="controls">
+                    <button class="primary-btn" id="pomo-toggle" style="width: auto;">Start</button>
+                    <button class="secondary-btn" id="pomo-reset">Reset</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Grounding Tool -->
+        <section id="tool-grounding" class="tool-view">
+            <div class="glass-panel">
+                <h1>5-4-3-2-1 Grounding</h1>
+                <p>Bring your mind back to the present moment by mentally identifying things around you. Check them off as you go.</p>
+                
+                <ul class="grounding-list" id="grounding-list">
+                    <li><label><input type="checkbox"> <b>5</b> things you can see</label></li>
+                    <li><label><input type="checkbox"> <b>4</b> things you can feel</label></li>
+                    <li><label><input type="checkbox"> <b>3</b> things you can hear</label></li>
+                    <li><label><input type="checkbox"> <b>2</b> things you can smell</label></li>
+                    <li><label><input type="checkbox"> <b>1</b> thing you can taste</label></li>
+                </ul>
+                <button class="secondary-btn" id="ground-reset" style="margin-top: 20px;">Reset</button>
+            </div>
+        </section>
+
+        <!-- 5. 2-Min Starter Tool -->
+        <section id="tool-starter" class="tool-view">
+            <div class="glass-panel">
+                <h1>2-Minute Starter</h1>
+                <p>The Anti-Procrastination Hack. Commit to working on your dreaded task for exactly 2 minutes. That's it.</p>
+                
+                <div style="margin-bottom: 25px;">
+                    <input type="text" id="starter-task" placeholder="What are you avoiding? (e.g., Write report)">
+                </div>
+
+                <div class="large-timer" id="starter-display">02:00</div>
+                
+                <div class="controls">
+                    <button class="primary-btn" id="starter-toggle" style="width: auto;">Just Start</button>
+                    <button class="secondary-btn" id="starter-reset">Reset</button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // --- Wake Lock API ---
+        let wakeLock = null;
+        async function requestWakeLock() {
+            try {
+                if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen');
+            } catch (err) { console.error(`Wake Lock error: ${err.message}`); }
+        }
+        function releaseWakeLock() {
+            if (wakeLock !== null) wakeLock.release().then(() => { wakeLock = null; });
+        }
+        function handleFullscreen(wantFullscreen) {
+            if (wantFullscreen && document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(e => console.log(e));
+                requestWakeLock();
+            } else {
+                if (document.fullscreenElement) document.exitFullscreen().catch(e => console.log(e));
+                releaseWakeLock();
+            }
+        }
+
+        // --- Audio Notification ---
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+        function playChime() {
+            if (!audioCtx) audioCtx = new AudioContext();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+            osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 1.5);
+            
+            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.1);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 2.5);
+            
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 2.5);
+        }
+
+        // --- Navigation Logic ---
+        const navBtns = document.querySelectorAll('.nav-btn');
+        const views = document.querySelectorAll('.tool-view');
+        let currentMode = 'tool-trataka';
+
+        navBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                if(document.body.classList.contains('focus-mode')) return; // Block nav during focus
+
+                navBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                const targetId = btn.getAttribute('data-target');
+                const theme = btn.getAttribute('data-theme');
+                currentMode = targetId;
+                
+                // Update views
+                views.forEach(v => v.classList.remove('active'));
+                document.getElementById(targetId).classList.add('active');
+                
+                // Update theme
+                document.body.className = theme;
+            });
+        });
+
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        // --- Core Session Manager (For Escapable tools: Trataka, Breathing) ---
+        let activeInterval = null;
+        let activeToolEndCallback = null;
+
+        function endFocusMode() {
+            document.body.classList.remove('focus-mode');
+            if (activeInterval) clearInterval(activeInterval);
+            if (activeToolEndCallback) activeToolEndCallback();
+            handleFullscreen(false);
+            activeToolEndCallback = null;
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && document.body.classList.contains('focus-mode')) {
+                endFocusMode();
+            }
+        });
+
+        // --- 1. Dot Staring (Trataka) Logic ---
+        const traMin = document.getElementById('tra-min');
+        const traSec = document.getElementById('tra-sec');
+        const traFs = document.getElementById('tra-fullscreen');
+        const theDot = document.getElementById('the-dot');
+
+        document.getElementById('tra-start').addEventListener('click', () => {
+            const m = parseInt(traMin.value, 10) || 0;
+            const s = parseInt(traSec.value, 10) || 0;
+            let remaining = m * 60 + s;
+            if (remaining <= 0) return;
+
+            document.body.classList.add('focus-mode');
+            handleFullscreen(traFs.checked);
+            
+            setTimeout(() => { theDot.classList.add('active'); }, 500);
+
+            activeToolEndCallback = () => { theDot.classList.remove('active'); };
+
+            activeInterval = setInterval(() => {
+                remaining--;
+                if (remaining <= 0) {
+                    endFocusMode();
+                    playChime();
+                }
+            }, 1000);
+        });
+
+        // --- 2. Box Breathing Logic ---
+        const breathMin = document.getElementById('breath-min');
+        const breathFs = document.getElementById('breath-fullscreen');
+        const breathAnim = document.getElementById('breathing-anim');
+        const breathCircle = document.getElementById('breath-circle');
+        const breathText = document.getElementById('breath-text');
+        
+        let breathingCycleTimeout = null;
+
+        function runBreathingCycle() {
+            if(!document.body.classList.contains('focus-mode')) return;
+            
+            // Inhale (4s)
+            breathText.style.opacity = 0;
+            setTimeout(() => { breathText.textContent = "Inhale"; breathText.style.opacity = 1; }, 200);
+            breathCircle.style.transform = "scale(1.8)";
+            
+            breathingCycleTimeout = setTimeout(() => {
+                // Hold (4s)
+                breathText.style.opacity = 0;
+                setTimeout(() => { breathText.textContent = "Hold"; breathText.style.opacity = 1; }, 200);
+                
+                breathingCycleTimeout = setTimeout(() => {
+                    // Exhale (4s)
+                    breathText.style.opacity = 0;
+                    setTimeout(() => { breathText.textContent = "Exhale"; breathText.style.opacity = 1; }, 200);
+                    breathCircle.style.transform = "scale(1)";
+                    
+                    breathingCycleTimeout = setTimeout(() => {
+                        // Hold (4s)
+                        breathText.style.opacity = 0;
+                        setTimeout(() => { breathText.textContent = "Hold"; breathText.style.opacity = 1; }, 200);
+                        
+                        breathingCycleTimeout = setTimeout(runBreathingCycle, 4000);
+                    }, 4000);
+                }, 4000);
+            }, 4000);
+        }
+
+        document.getElementById('breath-start').addEventListener('click', () => {
+            const m = parseInt(breathMin.value, 10) || 0;
+            let remaining = m * 60;
+            if (remaining <= 0) return;
+
+            document.body.classList.add('focus-mode');
+            handleFullscreen(breathFs.checked);
+            
+            setTimeout(() => { 
+                breathAnim.classList.add('active'); 
+                runBreathingCycle();
+            }, 500);
+
+            activeToolEndCallback = () => {
+                breathAnim.classList.remove('active');
+                clearTimeout(breathingCycleTimeout);
+                breathCircle.style.transform = "scale(1)";
+            };
+
+            activeInterval = setInterval(() => {
+                remaining--;
+                if (remaining <= 0) {
+                    endFocusMode();
+                    playChime();
+                }
+            }, 1000);
+        });
+
+        // --- 3. Pomodoro Logic ---
+        let pomoRemaining = 25 * 60;
+        let pomoActive = false;
+        let pomoInterval = null;
+        let currentPomoMode = 25 * 60; // default 25m
+
+        const pomoDisplay = document.getElementById('pomo-display');
+        const pomoToggle = document.getElementById('pomo-toggle');
+        
+        function updatePomoDisplay() { pomoDisplay.textContent = formatTime(pomoRemaining); }
+
+        document.getElementById('pomo-mode-work').addEventListener('click', () => {
+            if(pomoActive) return;
+            currentPomoMode = 25 * 60; pomoRemaining = currentPomoMode; updatePomoDisplay();
+            document.body.className = "theme-pomodoro";
+        });
+        document.getElementById('pomo-mode-break').addEventListener('click', () => {
+            if(pomoActive) return;
+            currentPomoMode = 5 * 60; pomoRemaining = currentPomoMode; updatePomoDisplay();
+            document.body.className = "theme-breathing"; // Calm color for break
+        });
+
+        pomoToggle.addEventListener('click', () => {
+            if (pomoActive) {
+                clearInterval(pomoInterval);
+                pomoActive = false;
+                pomoToggle.textContent = "Resume";
+            } else {
+                pomoActive = true;
+                pomoToggle.textContent = "Pause";
+                pomoInterval = setInterval(() => {
+                    pomoRemaining--;
+                    updatePomoDisplay();
+                    if (pomoRemaining <= 0) {
+                        clearInterval(pomoInterval);
+                        pomoActive = false;
+                        pomoToggle.textContent = "Start";
+                        playChime();
+                    }
+                }, 1000);
+            }
+        });
+
+        document.getElementById('pomo-reset').addEventListener('click', () => {
+            clearInterval(pomoInterval);
+            pomoActive = false;
+            pomoRemaining = currentPomoMode;
+            pomoToggle.textContent = "Start";
+            updatePomoDisplay();
+        });
+
+        // --- 4. Grounding Logic ---
+        const groundCheckboxes = document.querySelectorAll('.grounding-list input[type="checkbox"]');
+        groundCheckboxes.forEach(cb => {
+            cb.addEventListener('change', (e) => {
+                const li = e.target.closest('li');
+                if(e.target.checked) li.classList.add('completed');
+                else li.classList.remove('completed');
+            });
+        });
+        document.getElementById('ground-reset').addEventListener('click', () => {
+            groundCheckboxes.forEach(cb => {
+                cb.checked = false;
+                cb.closest('li').classList.remove('completed');
+            });
+        });
+
+        // --- 5. 2-Min Starter Logic ---
+        let starterRemaining = 2 * 60;
+        let starterActive = false;
+        let starterInterval = null;
+
+        const starterDisplay = document.getElementById('starter-display');
+        const starterToggle = document.getElementById('starter-toggle');
+
+        function updateStarterDisplay() { starterDisplay.textContent = formatTime(starterRemaining); }
+
+        starterToggle.addEventListener('click', () => {
+            if (starterActive) {
+                clearInterval(starterInterval);
+                starterActive = false;
+                starterToggle.textContent = "Resume";
+            } else {
+                starterActive = true;
+                starterToggle.textContent = "Pause";
+                starterInterval = setInterval(() => {
+                    starterRemaining--;
+                    updateStarterDisplay();
+                    if (starterRemaining <= 0) {
+                        clearInterval(starterInterval);
+                        starterActive = false;
+                        starterToggle.textContent = "Start";
+                        playChime();
+                    }
+                }, 1000);
+            }
+        });
+
+        document.getElementById('starter-reset').addEventListener('click', () => {
+            clearInterval(starterInterval);
+            starterActive = false;
+            starterRemaining = 2 * 60;
+            starterToggle.textContent = "Just Start";
+            updateStarterDisplay();
+        });
+
+    </script>
+</body>
+</html>
